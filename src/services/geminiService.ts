@@ -146,7 +146,90 @@ export async function generateDocumentation(repoData: RepoStructure, type: 'read
   return response.text;
 }
 
-export async function compareCodebases(repo1: RepoStructure, repo2: RepoStructure) {
+export interface ComparisonAnalysis {
+  scores: {
+    category: string;
+    repoAScore: number;
+    repoBScore: number;
+    reasoning: string;
+  }[];
+  features: {
+    feature: string;
+    repoAStatus: 'supported' | 'partial' | 'unsupported';
+    repoBStatus: 'supported' | 'partial' | 'unsupported';
+    details: string;
+  }[];
+  architecture: {
+    title: string;
+    repoA: string;
+    repoB: string;
+  }[];
+  scalabilityVerdict: string;
+  finalVerdict: {
+    winner: 'Repo A' | 'Repo B' | 'Tie';
+    summary: string;
+    bestFor: string;
+  };
+  markdownReport: string;
+}
+
+const comparisonSchema = {
+  type: Type.OBJECT,
+  properties: {
+    scores: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          category: { type: Type.STRING },
+          repoAScore: { type: Type.NUMBER },
+          repoBScore: { type: Type.NUMBER },
+          reasoning: { type: Type.STRING }
+        },
+        required: ["category", "repoAScore", "repoBScore", "reasoning"]
+      }
+    },
+    features: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          feature: { type: Type.STRING },
+          repoAStatus: { type: Type.STRING, enum: ["supported", "partial", "unsupported"] },
+          repoBStatus: { type: Type.STRING, enum: ["supported", "partial", "unsupported"] },
+          details: { type: Type.STRING }
+        },
+        required: ["feature", "repoAStatus", "repoBStatus", "details"]
+      }
+    },
+    architecture: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          title: { type: Type.STRING },
+          repoA: { type: Type.STRING },
+          repoB: { type: Type.STRING }
+        },
+        required: ["title", "repoA", "repoB"]
+      }
+    },
+    scalabilityVerdict: { type: Type.STRING },
+    finalVerdict: {
+      type: Type.OBJECT,
+      properties: {
+        winner: { type: Type.STRING, enum: ["Repo A", "Repo B", "Tie"] },
+        summary: { type: Type.STRING },
+        bestFor: { type: Type.STRING }
+      },
+      required: ["winner", "summary", "bestFor"]
+    },
+    markdownReport: { type: Type.STRING, description: "Detailed markdown analysis for deeper reading" }
+  },
+  required: ["scores", "features", "architecture", "scalabilityVerdict", "finalVerdict", "markdownReport"]
+};
+
+export async function compareCodebases(repo1: RepoStructure, repo2: RepoStructure): Promise<ComparisonAnalysis> {
   const prompt = `
     Compare these two GitHub repositories side-by-side:
     
@@ -159,20 +242,25 @@ export async function compareCodebases(repo1: RepoStructure, repo2: RepoStructur
     Tech Stack B: ${JSON.stringify(repo2.packageJson?.dependencies || {})}
     
     Provide a detailed comparison focusing on:
-    1. Architectural differences.
-    2. Which one is more scalable and why?
-    3. Which one has better documentation/structure?
-    4. Tech stack trade-offs.
+    1. Category scores (Code Quality, Documentation, Tech Modernity, Maintenance).
+    2. Specific feature support (e.g. "Testing Hub", "CI/CD Readiness", "Dockerized", "Typing Coverage").
+    3. Architecture breakdown (Patterns used).
+    4. Scalability verdict.
     5. Final verdict on which repo is "better" for specific use cases.
     
-    Format as Markdown with clear headings and a comparison table.
+    Return a structured JSON response.
   `;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview", 
-    contents: prompt
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: comparisonSchema
+    }
   });
-  return response.text;
+
+  return JSON.parse(response.text || '{}') as ComparisonAnalysis;
 }
 
 export async function chatAboutCodebase(
