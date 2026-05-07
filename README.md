@@ -26,29 +26,7 @@ Neural Repo Intelligence is a powerful, AI-driven visual tool designed to help d
 - Node.js (v18+)
 - A Google Gemini API Key
 
-### Installation
 
-1. **Clone the repository**:
-   ```bash
-   git clone <your-repo-url>
-   cd codebase-explainer
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Set up Environment Variables**:
-   Create a `.env` file in the root directory and add your Gemini API key:
-   ```env
-   GEMINI_API_KEY=your_api_key_here
-   ```
-
-4. **Run in development mode**:
-   ```bash
-   npm run dev
-   ```
 
 ## 🌐 Deployment (Render.com)
 
