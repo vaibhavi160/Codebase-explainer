@@ -1,0 +1,6 @@
+{
+  "name": "Codebase Explainer",
+  "description": "An AI-powered tool that analyzes and visualizes GitHub repositories, providing human-like explanations and interactive code maps.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
